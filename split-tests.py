@@ -2,7 +2,7 @@ import statistics
 
 from matplotlib import pyplot
 import numpy as np
-from tools import removeItem, HEADER,BA,AB,BB,AA, get_stats, barPlot, combine, fromHistToData, boxPlots, hist, toInt, getDropOff
+from tools import removeItem, round2dec, HEADER,BA,AB,BB,AA, get_stats, barPlot, combine, fromHistToData, boxPlots, hist, toInt, getDropOff
 import matplotlib.pyplot as plt
 from scipy import stats
 import csv
@@ -54,7 +54,7 @@ for key in sets.keys():
 # printMannwhitneyu(BA, AA, histSets)
 # printMannwhitneyu(BA, BB, histSets)
 
-# boxPlots([histSets[AA], histSets[BB], histSets[BA], histSets[AB]], [AA, BB, BA, AB])
+boxPlots([histSets[AA], histSets[BB], histSets[BA], histSets[AB]], [AA, BB, BA, AB])
 # barPlot(histSets[AB], AB)
 # barPlot(histSets[AA], AA)
 # barPlot(histSets[BB], BB)
@@ -63,8 +63,6 @@ for key in sets.keys():
 # barPlot(histSets[AB], AB)
 # barPlot(histSets[AB], AB)
 
-def round2dec(number, round = 2):
-  return math.ceil(number * (10 ** round)) / (10 ** round)
 
 def stats(sets, which):
   data = fromHistToData(sets)

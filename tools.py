@@ -1,6 +1,9 @@
 import statistics
 import matplotlib.pyplot as plt
 import numpy as np
+import math
+
+
 HEADER = "CCF / LF"
 BA = 'CCF+NONE'
 AB = 'NONE+LF'
@@ -19,6 +22,9 @@ def hist(data):
   plt.hist(data, bins=len(data))
   plt.show()
   plt.clf()
+
+def round2dec(number, round = 2):
+  return math.ceil(number * (10 ** round)) / (10 ** round)
 
 
 def removeItem(data, item):
@@ -107,7 +113,7 @@ def lineChart (histData, labels):
   # Create the boxplot
 
   ax = fig.add_subplot(111)
-  bp = ax.boxplot(data_to_plot)
+  bp = ax.boxplot(data_to_plot, showmeans=True)
   plt.xlabel("N challenges completed")
   plt.ylabel("N users")
 
