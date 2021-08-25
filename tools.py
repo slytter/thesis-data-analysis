@@ -1,10 +1,10 @@
 import statistics
 import matplotlib.pyplot as plt
 import numpy as np
-HEADER = "CHAINED / UNLOCK"
-BA = 'CHAINED+NONE'
-AB = 'NONE+LOCKED'
-BB = 'CHAINED+LOCKED'
+HEADER = "CCF / LF"
+BA = 'CCF+NONE'
+AB = 'NONE+LF'
+BB = 'CCF+LF'
 AA = 'NONE+NONE'
 
 colors = {
@@ -18,24 +18,29 @@ colors = {
 def hist(data):
   plt.hist(data, bins=len(data))
   plt.show()
+  plt.clf()
+
 
 def removeItem(data, item):
-  print(data)
   del data[item]
-  print(data)
   return data
 
-def boxPlots (histData):
+def boxPlots (histData, labels):
   data_to_plot = list(map(fromHistToData, histData))
   # Create a figure instance
   fig = plt.figure(1, figsize=(9, 6), )
   # Create an axes instance
   # Create the boxplot
-  plt.xticks(['in', 'ins'])
-
+  plt.xlabel("Prototype")
+  plt.ylabel("N challenges completed")
   ax = fig.add_subplot(111)
   bp = ax.boxplot(data_to_plot)
+  plt.xticks(list(range(1, len(histData) + 1)), labels)
+
+  plt.savefig('/Users/macbook/PycharmProjects/funnel-plotting/boxPlot.png', bbox_inches='tight', dpi=150)
   plt.show()
+  plt.clf()
+
   # fig.savefig('fig1.png', bbox_inches='tight')
 
 def toInt(_list):
@@ -86,11 +91,33 @@ def barPlot(counts, protoType):
   plt.bar(x, counts, color=colors[protoType])
   plt.xlabel("N challenges completed")
   plt.ylabel("N users")
-  plt.title(protoType + " - Challenge Completed per User")
+  plt.title(protoType + " - Challenge completed per user")
 
   plt.xticks(x, x)
+  plt.ylim(0, 300)
 
-  plt.savefig('/Users/macbook/PycharmProjects/funnel-plotting/fig1.png', bbox_inches='tight', dpi=150)
+  plt.savefig('/Users/macbook/PycharmProjects/funnel-plotting/barPlots' + protoType + '.png', bbox_inches='tight', dpi=150)
+  plt.clf()
+
+def lineChart (histData, labels):
+  data_to_plot = list(map(fromHistToData, histData))
+  # Create a figure instance
+  fig = plt.figure(1, figsize=(9, 6), )
+  # Create an axes instance
+  # Create the boxplot
+
+  ax = fig.add_subplot(111)
+  bp = ax.boxplot(data_to_plot)
+  plt.xlabel("N challenges completed")
+  plt.ylabel("N users")
+
+  plt.xticks(list(range(1, len(histData) + 1)), labels)
+
+  plt.savefig('/Users/macbook/PycharmProjects/funnel-plotting/boxPlot.png', bbox_inches='tight', dpi=150)
+  plt.show()
+  plt.clf()
+
+  # fig.savefig('fig1.png', bbox_inches='tight')
 
 
 def combine(list1, list2):
