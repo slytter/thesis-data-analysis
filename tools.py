@@ -10,6 +10,7 @@ AB = 'NONE+LF'
 BB = 'CCF+LF'
 AA = 'NONE+NONE'
 
+
 colors = {
   HEADER: 'black',
   BA: '#27AE60',
@@ -89,7 +90,7 @@ def get_stats(counts):
   print('num users: ')
   print(len(counts))
 
-def barPlot(counts, protoType):
+def barPlot(counts, protoType, maxValue = 300, title ="Challenge completed per user - "):
   x = list(range(0, len(counts)))
 
   #x_pos = [i for i, _ in enumerate(x)]
@@ -97,10 +98,10 @@ def barPlot(counts, protoType):
   plt.bar(x, counts, color=colors[protoType])
   plt.xlabel("N challenges completed")
   plt.ylabel("N users")
-  plt.title(protoType + " - Challenge completed per user")
+  plt.title(title + protoType)
 
   plt.xticks(x, x)
-  plt.ylim(0, 300)
+  plt.ylim(0, maxValue)
 
   plt.savefig('/Users/macbook/PycharmProjects/funnel-plotting/barPlots' + protoType + '.png', bbox_inches='tight', dpi=150)
   plt.clf()

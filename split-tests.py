@@ -1,5 +1,6 @@
 import statistics
 
+import scipy.stats
 from matplotlib import pyplot
 import numpy as np
 from tools import removeItem, round2dec, HEADER,BA,AB,BB,AA, get_stats, barPlot, combine, fromHistToData, boxPlots, hist, toInt, getDropOff
@@ -8,6 +9,35 @@ from scipy import stats
 import csv
 from statistics import mean, stdev
 import math
+from numpy.random import randn
+
+
+
+def printMannwhitneyu(experiment, control, set):
+  x = set[experiment]
+  y = set[control]
+  experimentMean = mean(fromHistToData(removeItem(x, 4)))
+  controlMean = mean(fromHistToData(removeItem(y, 4)))
+
+  result = stats.mannwhitneyu(fromHistToData(x), fromHistToData(y), alternative='two-sided')
+
+  if(result.pvalue < 0.05):
+    if(experimentMean > controlMean):
+      print(experiment, '>', control, '&', result.pvalue, '&', 'Confirmed', '&', experiment, '\\\\ \\hline')
+      # print(experiment, 'is significantly larger than', control, 'p', result.pvalue)
+    else:
+      print(control, '>', experiment, '&', result.pvalue, '&', 'Confirmed', '&', control, '\\\\ \\hline')
+      # print(control, 'is significantly larger than', experiment, 'p', result.pvalue)
+  else:
+    print(experiment, '>', control, '&', result.pvalue, '&', 'Rejected', '&', '-', '\\\\ \\hline')
+
+    pass
+    # print('No significant difference found between ', experiment, 'and', control, 'p-value: ', result.pvalue)
+
+
+
+
+
 
 sets = {
   HEADER: [],
@@ -25,44 +55,126 @@ with open('/Users/macbook/PycharmProjects/funnel-plotting/full-funnel.csv', newl
 
 
 
-def printMannwhitneyu(experiment, control, set):
-  x = set[experiment]
-  y = set[control]
-  result = stats.mannwhitneyu(fromHistToData(x), fromHistToData(y), alternative='two-sided')
-  if(result.pvalue < 0.05):
-    if(mean(x) > mean(y)):
-      print(experiment, 'is significantly larger than', control, 'p', result.pvalue)
-    else:
-      print(control, 'is significantly larger than', experiment, 'p', result.pvalue)
-  else:
-    pass
-    # print('No significant difference found between ', experiment, 'and', control, 'p-value: ', result.pvalue)
-
 
 histSets = {}
 for key in sets.keys():
   dropOffs = getDropOff(sets[key])
   histSets[key] = dropOffs
 
-#
-# printMannwhitneyu(BB, AA, histSets)
-# printMannwhitneyu(BA, AB, histSets)
-#
-# printMannwhitneyu(AB, AA, histSets)
-# printMannwhitneyu(AB, BB, histSets)
-#
-# printMannwhitneyu(BA, AA, histSets)
-# printMannwhitneyu(BA, BB, histSets)
 
-boxPlots([histSets[AA], histSets[BB], histSets[BA], histSets[AB]], [AA, BB, BA, AB])
+ing = {
+  "CHAINED": combine(histSets[BB], histSets[BA]),
+  "NOT_CHAINED": combine(histSets[AB], histSets[AA]),
+  "LOCKED": combine(histSets[BB], histSets[AB]),
+  "NOT_LOCKED": combine(histSets[BA], histSets[AA])
+}
+
+# printMannwhitneyu("CHAINED", "NOT_CHAINED", ing)
+# printMannwhitneyu("LOCKED", "NOT_LOCKED", ing)
+
+
+
+
+def printTests ():
+  printMannwhitneyu(BB, AA, histSets)
+  printMannwhitneyu(BA, AB, histSets)
+
+  printMannwhitneyu(AB, AA, histSets)
+  printMannwhitneyu(AB, BB, histSets)
+
+  printMannwhitneyu(BA, AA, histSets)
+  printMannwhitneyu(BA, BB, histSets)
+
+printTests()
+
+# boxPlots([histSets[AA], histSets[BB], histSets[BA], histSets[AB]], [AA, BB, BA, AB])
+def printBarPlots():
+
+  barPlot(histSets[AB], AB)
+  barPlot(histSets[AA], AA)
+  barPlot(histSets[BB], BB)
+  barPlot(histSets[BA], BA)
+
+def printBarPlotsNoFriction():
+  barPlot(removeItem(histSets[AB], 4), AB)
+  barPlot(removeItem(histSets[AA], 4), AA)
+  barPlot(removeItem(histSets[BB], 4), BB)
+  barPlot(removeItem(histSets[BA], 4), BA)
+
+
+
+
+print(stats.levene(
+  fromHistToData(histSets[AB]),
+  fromHistToData(histSets[AA]),
+  fromHistToData(histSets[BB]),
+  fromHistToData(histSets[BA])
+))
+
+
+
+maxsum = 2000
+
+title = 'Drop-off for prototype - '
+
+
+
+totalChallengeForProto = {
+  AA: 919,
+  AB: 950,
+  BB: 941,
+  BA: 986,
+}
+
+def plotCumSum (data, proto):
+  cum = np.cumsum(data)
+  max = totalChallengeForProto[proto]
+
+  barPlot(max - cum, proto, 986, title)
+
+#
 # barPlot(histSets[AB], AB)
 # barPlot(histSets[AA], AA)
 # barPlot(histSets[BB], BB)
 # barPlot(histSets[BA], BA)
-# barPlot(histSets[AB], AB)
-# barPlot(histSets[AB], AB)
-# barPlot(histSets[AB], AB)
 
+
+def calcCompletionRate():
+
+  challengesCompletions = []
+  totalUsers = 3796
+
+  with open('/Users/macbook/PycharmProjects/funnel-plotting/chalcompletions.csv', newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=';')
+    for row in spamreader:
+      challengesCompletions.append(row)
+
+
+  for challenge in challengesCompletions:
+    cr = (int(challenge[1]) / totalUsers)
+    challenge.append(cr)
+    print(challenge[0], '&', challenge[1], '&', str(round2dec(cr * 100, 1)) + '\%', '&', '-' '\\\\ \\hline')
+
+  crOnly = []
+  nOnly = []
+
+  for challenge in challengesCompletions:
+    crOnly.append(challenge[2])
+    nOnly.append(int(challenge[1]))
+
+  cr = np.average(crOnly)
+
+  print('\\textbf{Average}', '&', '&', str(round2dec(cr * 100, 1)) + '\%', '&', '-')
+
+  nTotal = np.sum(nOnly)
+  print('nTotal:', nTotal)
+
+
+def normalDist(x):
+  shapiro_test = stats.shapiro(x)
+  print(shapiro_test.pvalue)
+
+data = 5 * randn(100) + 50
 
 def stats(sets, which):
   data = fromHistToData(sets)
@@ -73,73 +185,11 @@ def stats(sets, which):
   nchal = str(sum(data))
   print(which, '&', n, '&', m, '(n:', nchal + ')', '&', std, '&', median, '\\\\ \hline')
 
-stats(histSets[AB], AB)
-stats(histSets[AA], AA)
-stats(histSets[BB], BB)
-stats(histSets[BA], BA)
+# stats(histSets[AB], AB)
+# stats(histSets[AA], AA)
+# stats(histSets[BB], BB)
+# stats(histSets[BA], BA)
 
 # hist(fromHistToData(abCounts))
 # print(statistics.stdev(fromHistToData(aaCounts)))
-
-
-
-def createDistributions ():
-  # none none
-  aaCounts = [64, 50, 71, 63, 75, 56, 36, 51, 61, 38, 30, 42, 40, 24, 35, 19, 27, 22, 13, 20, 17, 13, 9]
-
-  # chained none
-  abCounts = [86, 84, 53, 92, 240, 50, 19, 27, 35, 17, 16, 4, 6, 8, 19, 20, 13, 15, 26, 34, 16, 23, 9]
-
-  # none locked
-  baCounts = [72, 63, 56, 71, 127, 51, 40, 71, 37, 34, 18, 25, 17, 33, 31, 18, 29, 36, 29, 27, 25, 16, 12]
-
-  # chained locked
-  bbCounts = [74, 54, 47, 88, 208, 40, 23, 37, 34, 9, 15, 12, 5, 22, 24, 15, 20, 18, 47, 40, 40, 20, 18]
-
-  aa = fromHistToData(aaCounts)
-  print('aa')
-  get_stats(aa)
-  barPlot(aaCounts)
-
-  ab = fromHistToData(abCounts)
-  print('Chained: a; Unlock: b')
-  get_stats(ab)
-  barPlot(abCounts)
-
-  ba = fromHistToData(baCounts)
-  print('Chained: b; Unlock: a')
-  get_stats(ba)
-  barPlot(baCounts)
-
-  bb = fromHistToData(bbCounts)
-  print('bb')
-  get_stats(bb)
-  barPlot(bbCounts)
-
-
-
-
-  print('Chained: a')
-  aCounts = combine(aaCounts, abCounts)
-  a = fromHistToData(aCounts)
-  get_stats(a)
-  barPlot(aCounts)
-
-  print('Chained: b')
-  bCounts = combine(baCounts, bbCounts)
-  b = fromHistToData(bCounts)
-  get_stats(b)
-  barPlot(bCounts)
-
-  print('aa vs ba (none, none vs chained no lock)')
-  aCounts = combine(aaCounts, baCounts)
-  a = fromHistToData(aCounts)
-  get_stats(a)
-  barPlot(aCounts)
-
-  print('Unlocked: b')
-  bCounts = combine(abCounts, bbCounts)
-  b = fromHistToData(bCounts)
-  get_stats(b)
-  barPlot(bCounts)
 
