@@ -10,29 +10,33 @@ import csv
 from statistics import mean, stdev
 import math
 from numpy.random import randn
-
+from scipy.stats import fligner, bartlett
 
 
 def printMannwhitneyu(experiment, control, set):
-  x = set[experiment]
-  y = set[control]
-  experimentMean = mean(fromHistToData(removeItem(x, 4)))
-  controlMean = mean(fromHistToData(removeItem(y, 4)))
+  x = removeItem(set[experiment], 4)
+  y = removeItem(set[control], 4)
+  dataX = fromHistToData(x)
+  dataY = fromHistToData(y)
 
-  result = stats.mannwhitneyu(fromHistToData(x), fromHistToData(y), alternative='two-sided')
+  experimentMean = mean(dataX)
+  controlMean = mean(dataY)
+
+  result = stats.mannwhitneyu(dataX, dataY, alternative='two-sided')
 
   if(result.pvalue < 0.05):
     if(experimentMean > controlMean):
-      print(experiment, '>', control, '&', result.pvalue, '&', 'Confirmed', '&', experiment, '\\\\ \\hline')
-      # print(experiment, 'is significantly larger than', control, 'p', result.pvalue)
+      #print(experiment, '--', control, '&', result.pvalue, '&', 'Accepted', '&', experiment, '\\\\ \\hline')
+      print(experiment, '>', control, 'p', round2dec(result.pvalue))
     else:
-      print(control, '>', experiment, '&', result.pvalue, '&', 'Confirmed', '&', control, '\\\\ \\hline')
-      # print(control, 'is significantly larger than', experiment, 'p', result.pvalue)
+      # print(control, '--', experiment, '&', round2dec(result.pvalue), '&', 'Accepted', '&', control, '\\\\ \\hline')
+      print(control, '>', experiment, 'p', round2dec(result.pvalue))
   else:
-    print(experiment, '>', control, '&', result.pvalue, '&', 'Rejected', '&', '-', '\\\\ \\hline')
+    largestMean = experiment if (experimentMean > controlMean) else control
+    #print(experiment, '--', control, '&', result.pvalue, '&', 'Rejected', '&', largestMean, '\\\\ \\hline')
+    print('No diff', experiment, 'and', control, 'p-value: ', round2dec(result.pvalue))
 
     pass
-    # print('No significant difference found between ', experiment, 'and', control, 'p-value: ', result.pvalue)
 
 
 
@@ -69,55 +73,51 @@ ing = {
   "NOT_LOCKED": combine(histSets[BA], histSets[AA])
 }
 
-# printMannwhitneyu("CHAINED", "NOT_CHAINED", ing)
-# printMannwhitneyu("LOCKED", "NOT_LOCKED", ing)
+#printMannwhitneyu("CHAINED", "NOT_CHAINED", ing)
+#printMannwhitneyu("LOCKED", "NOT_LOCKED", ing)
 
 
 
 
 def printTests ():
-  printMannwhitneyu(BB, AA, histSets)
-  printMannwhitneyu(BA, AB, histSets)
+  printMannwhitneyu(AA, BB, histSets)
+  printMannwhitneyu(AB, BA, histSets)
 
-  printMannwhitneyu(AB, AA, histSets)
-  printMannwhitneyu(AB, BB, histSets)
+  printMannwhitneyu(AA, AB, histSets)
+  printMannwhitneyu(BB, AB, histSets)
 
-  printMannwhitneyu(BA, AA, histSets)
-  printMannwhitneyu(BA, BB, histSets)
+  printMannwhitneyu(AA, BA, histSets)
+  printMannwhitneyu(BB, BA, histSets)
 
 printTests()
 
+
+def stats(set, proto):
+  set = removeItem(set, 4)
+  data = fromHistToData(set)
+  m = mean(data)
+  std = stdev(data)
+  print(proto, 'mean', round2dec(m), 'std', round2dec(std))
+
+# stats(histSets[AB], AB)
+# stats(histSets[AA], AA)
+# stats(histSets[BB], BB)
+# stats(histSets[BA], BA)
+
+
 # boxPlots([histSets[AA], histSets[BB], histSets[BA], histSets[AB]], [AA, BB, BA, AB])
 def printBarPlots():
-
   barPlot(histSets[AB], AB)
   barPlot(histSets[AA], AA)
   barPlot(histSets[BB], BB)
   barPlot(histSets[BA], BA)
 
-def printBarPlotsNoFriction():
-  barPlot(removeItem(histSets[AB], 4), AB)
-  barPlot(removeItem(histSets[AA], 4), AA)
-  barPlot(removeItem(histSets[BB], 4), BB)
-  barPlot(removeItem(histSets[BA], 4), BA)
-
-
-
-
-print(stats.levene(
-  fromHistToData(histSets[AB]),
-  fromHistToData(histSets[AA]),
-  fromHistToData(histSets[BB]),
-  fromHistToData(histSets[BA])
-))
-
 
 
 maxsum = 2000
 
-title = 'Drop-off for prototype - '
 
-
+print(fligner(histSets[AA], histSets[BB], histSets[AB],histSets[BA],))
 
 totalChallengeForProto = {
   AA: 919,
@@ -126,11 +126,24 @@ totalChallengeForProto = {
   BA: 986,
 }
 
+
 def plotCumSum (data, proto):
   cum = np.cumsum(data)
   max = totalChallengeForProto[proto]
-
+  title = 'Drop-off (-5.) for prototype - '
+  title = 'Drop-off for prototype - '
   barPlot(max - cum, proto, 986, title)
+
+
+def printBarPlotsNoFriction():
+  print(len(histSets[AB]))
+  print(len(removeItem(histSets[AB], 4)))
+  plotCumSum(removeItem(histSets[AB], 4), AB)
+  plotCumSum(removeItem(histSets[AA], 4), AA)
+  plotCumSum(removeItem(histSets[BB], 4), BB)
+  plotCumSum(removeItem(histSets[BA], 4), BA)
+
+# printBarPlotsNoFriction()
 
 #
 # barPlot(histSets[AB], AB)
@@ -138,58 +151,4 @@ def plotCumSum (data, proto):
 # barPlot(histSets[BB], BB)
 # barPlot(histSets[BA], BA)
 
-
-def calcCompletionRate():
-
-  challengesCompletions = []
-  totalUsers = 3796
-
-  with open('/Users/macbook/PycharmProjects/funnel-plotting/chalcompletions.csv', newline='') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter=';')
-    for row in spamreader:
-      challengesCompletions.append(row)
-
-
-  for challenge in challengesCompletions:
-    cr = (int(challenge[1]) / totalUsers)
-    challenge.append(cr)
-    print(challenge[0], '&', challenge[1], '&', str(round2dec(cr * 100, 1)) + '\%', '&', '-' '\\\\ \\hline')
-
-  crOnly = []
-  nOnly = []
-
-  for challenge in challengesCompletions:
-    crOnly.append(challenge[2])
-    nOnly.append(int(challenge[1]))
-
-  cr = np.average(crOnly)
-
-  print('\\textbf{Average}', '&', '&', str(round2dec(cr * 100, 1)) + '\%', '&', '-')
-
-  nTotal = np.sum(nOnly)
-  print('nTotal:', nTotal)
-
-
-def normalDist(x):
-  shapiro_test = stats.shapiro(x)
-  print(shapiro_test.pvalue)
-
-data = 5 * randn(100) + 50
-
-def stats(sets, which):
-  data = fromHistToData(sets)
-  median = statistics.median(data)
-  m = round2dec(mean(data))
-  std = round2dec(stdev(data))
-  n = (len(data))
-  nchal = str(sum(data))
-  print(which, '&', n, '&', m, '(n:', nchal + ')', '&', std, '&', median, '\\\\ \hline')
-
-# stats(histSets[AB], AB)
-# stats(histSets[AA], AA)
-# stats(histSets[BB], BB)
-# stats(histSets[BA], BA)
-
-# hist(fromHistToData(abCounts))
-# print(statistics.stdev(fromHistToData(aaCounts)))
 

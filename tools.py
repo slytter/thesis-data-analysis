@@ -29,8 +29,9 @@ def round2dec(number, round = 2):
 
 
 def removeItem(data, item):
-  del data[item]
-  return data
+  items = data.copy()
+  del items[item]
+  return items
 
 def boxPlots (histData, labels):
   data_to_plot = list(map(fromHistToData, histData))
@@ -96,9 +97,9 @@ def barPlot(counts, protoType, maxValue = 300, title ="Challenge completed per u
   #x_pos = [i for i, _ in enumerate(x)]
 
   plt.bar(x, counts, color=colors[protoType])
-  plt.xlabel("N challenges completed")
-  plt.ylabel("N users")
-  plt.title(title + protoType)
+  plt.xlabel("N challenges completed", fontsize=13)
+  plt.ylabel("N users", fontsize=13)
+  plt.title(title + protoType, fontsize=15)
 
   plt.xticks(x, x)
   plt.ylim(0, maxValue)
